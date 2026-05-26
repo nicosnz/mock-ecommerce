@@ -50,16 +50,3 @@ export function updateCartCount(cart:Cart[]) {
   return total;
 }
 
-// function changeQty(id:number, delta:number,cart:Cart[]) {
-//   const item = cart.find(x => x.producto.id === id);
-//   if (!item) return;
-//   item.qty += delta;
-//   if (item.qty <= 0) cart = cart.filter(x => x.producto.id !== id);
-//   updateCartCount(cart);
-//   renderCart();
-// }
-// function removeFromCart(id:number,cart:Cart[]) {
-//   cart = cart.filter(x => x.producto.id !== id);
-//   updateCartCount(cart);
-//   renderCart();
-// }

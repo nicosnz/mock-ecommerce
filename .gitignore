@@ -16,7 +16,6 @@ dist/
 coverage/
 .env
 __pycache__/
-test/
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
