@@ -64,5 +64,45 @@
       expect(products[0].stock).toBe(0);
 
     });
+    it('Debe aumentar la cantidad cuando el producto ya existe en el carrito', () => {
+
+      const products: Product[] = [
+        {
+          id: 1,
+          nombre: 'Mouse',
+          desc: 'Mouse gamer',
+          precio: 50,
+          stock: 10,
+          cat: 'Tecnologia'
+        }
+      ];
+
+      const cart: Cart[] = [
+        {
+          producto: {
+            id: 1,
+            nombre: 'Mouse',
+            desc: 'Mouse gamer',
+            precio: 50,
+            stock: 9,
+            cat: 'Tecnologia'
+          },
+          qty: 1
+        }
+      ];
+
+      const result = addToCart(1, products, cart);
+
+      expect(result).not.toBeNull();
+
+      expect(result?.length).toBe(1);
+
+      expect(result?.[0].qty).toBe(2);
+
+      expect(result?.[0].producto.nombre).toBe('Mouse');
+
+      expect(products[0].stock).toBe(9);
+
+    });
 
   });
