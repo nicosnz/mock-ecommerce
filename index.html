@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/src/style.css">
+    <script defer type="module" src="/src/main.ts"></script>
+    <title>niCom</title>
+  </head>
+  <body>
+    <nav>
+      <div class="logo">ni<span>Com</span></div>
+      <ul>
+        <li><a onclick="showPage('catalogo')" class="active" id="nav-catalogo">Catálogo</a></li>
+        <li><a onclick="showPage('gestion')" id="nav-gestion">Mis Productos</a></li>
+        <li><a onclick="showPage('pedidos-comerciante')" id="nav-pedidos-comerciante">Pedidos</a></li>
+      </ul>
+      <div class="nav-right">
+        <button class="cart-btn" onclick="showPage('pedido')">
+          🛒 Mi Pedido <span class="cart-count" id="cart-count">0</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ═══════════ PAGE: CATÁLOGO ═══════════ -->
+    <div class="page active" id="page-catalogo">
+      <div class="hero">
+        <h1>Descubrí lo mejor de Santa Cruz</h1>
+        <p>Productos locales, directo a vos. Sin filas, sin horarios.</p>
+      </div>
+      <div class="filters">
+        <button class="filter-btn active" onclick="filterCat('todos', this)">Todos</button>
+        <button class="filter-btn" onclick="filterCat('Alimentos', this)">🥗 Alimentos</button>
+        <button class="filter-btn" onclick="filterCat('Bebidas', this)">🥤 Bebidas</button>
+        <button class="filter-btn" onclick="filterCat('Ropa', this)">👗 Ropa</button>
+        <button class="filter-btn" onclick="filterCat('Electrónica', this)">📱 Electrónica</button>
+        <button class="filter-btn" onclick="filterCat('Hogar', this)">🏡 Hogar</button>
+      </div>
+      <div class="catalog" id="catalog-grid"></div>
+    </div>
+
+    <!-- ═══════════ PAGE: DETALLE ═══════════ -->
+    <div class="page" id="page-detalle">
+      <button class="back-btn" onclick="showPage('catalogo')">← Volver al catálogo</button>
+      <div class="detail-wrap">
+        <div class="detail-img" id="detail-emoji"></div>
+        <div class="detail-info">
+          <div class="detail-cat" id="detail-cat"></div>
+          <div class="detail-name" id="detail-name"></div>
+          <div class="detail-price" id="detail-price"></div>
+          <div class="stock-badge" id="detail-stock"></div>
+          <div class="detail-desc" id="detail-desc"></div>
+          <button class="detail-add-btn" id="detail-add-btn">+ Agregar al Pedido</button>
+          <div class="opinions">
+            <h3>Opiniones</h3>
+            <div id="detail-opinions"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ PAGE: PEDIDO ═══════════ -->
+    <div class="page" id="page-pedido">
+      <div class="pedido-wrap">
+        <h1>Mi Pedido</h1>
+        <div id="cart-items"></div>
+        <div id="cart-summary-block"></div>
+      </div>
+    </div>
+
+    <!-- ═══════════ PAGE: GESTIÓN ═══════════ -->
+    <div class="page" id="page-gestion">
+      <div class="gestion-wrap">
+        <div class="gestion-header">
+          <div>
+            <h1>Mis Productos</h1>
+            <p class="section-title">Gestión de catálogo</p>
+          </div>
+          <button class="new-product-btn" onclick="openModal()">+ Agregar Producto</button>
+        </div>
+        <table class="products-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Nombre</th>
+              <th>Categoría</th>
+              <th>Precio</th>
+              <th>Stock</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="products-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════ PAGE: PEDIDOS COMERCIANTE ═══════════ -->
+    <div class="page" id="page-pedidos-comerciante">
+      <div class="pedidos-wrap">
+        <h1>Pedidos Recibidos</h1>
+        <div id="pedidos-list"></div>
+      </div>
+    </div>
+
+    <!-- ═══════════ MODAL: NUEVO / EDITAR PRODUCTO ═══════════ -->
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal">
+        <h2 id="modal-title">Agregar Producto</h2>
+        <div class="form-group">
+          <label>Nombre del producto *</label>
+          <input type="text" id="form-nombre" placeholder="Ej: Tucumanas caseras">
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <textarea id="form-desc" placeholder="Describe brevemente el producto..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Precio (Bs.) *</label>
+            <input type="number" id="form-precio" placeholder="0.00">
+          </div>
+          <div class="form-group">
+            <label>Stock *</label>
+            <input type="number" id="form-stock" placeholder="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Categoría *</label>
+            <select id="form-cat">
+              <option value="">Seleccionar...</option>
+              <option>Alimentos</option>
+              <option>Bebidas</option>
+              <option>Ropa</option>
+              <option>Electrónica</option>
+              <option>Hogar</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Emoji / Ícono</label>
+            <input type="text" id="form-emoji" placeholder="🍕" maxlength="4">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="cancel-btn" onclick="closeModal()">Cancelar</button>
+          <button class="save-btn" onclick="saveProduct()">Guardar Producto</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ MODAL: DETALLE PEDIDO ═══════════ -->
+    <div class="modal-overlay" id="pedido-modal-overlay">
+      <div class="modal">
+        <h2 id="pm-id">Pedido #001</h2>
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem;">
+          <span style="font-size:0.85rem;color:var(--muted)">Cliente:</span>
+          <span id="pm-cliente" style="font-weight:600;font-size:0.9rem;"></span>
+        </div>
+        <div class="pedido-detail-items" id="pm-items"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:1rem;padding-top:0.75rem;border-top:2px solid var(--border);">
+          <span style="font-weight:600">Total</span>
+          <span id="pm-total" style="font-weight:700;color:var(--accent2);font-size:1.05rem;"></span>
+        </div>
+        <div class="form-group" style="margin-top:0.75rem;">
+          <label>Estado del pedido</label>
+          <select class="status-select" id="pm-status" onchange="updatePedidoStatus()"></select>
+        </div>
+        <div class="modal-actions">
+          <button class="save-btn" onclick="closePedidoModal()" style="flex:1">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
