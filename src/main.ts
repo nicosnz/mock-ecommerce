@@ -1,9 +1,13 @@
-import { addToCart, updateCartCount } from './cart/AddtoCart';
+import { addToCart} from './cart/AddtoCart';
 import type { Cart } from "./cart/Cart";
+import { updateCartCount } from './cart/updateCartCount';
 import type { EstadoPedido } from "./pedidos/Pedido";
 import { findPedido, pedidos } from "./pedidos/PedidosMock";
+import { addProduct } from './products/addProduct';
+import { filterCat } from './products/filterCategory';
 import type { Product } from "./products/Product";
-import { addProduct, delProduct, filterCat, products, type Result } from './products/ProductsMock';
+import { delProduct, products } from './products/ProductsMock';
+import type { Result } from './shared/Result';
 import { showToast } from "./shared/Toast";
 
 
@@ -249,7 +253,10 @@ function closeModal() {
 }
 
 export function deleteProduct(id:number) {
+  console.log(products);
+  
   delProduct(id);
+  
   renderTable();
   showToast('Producto eliminado.');
 }
@@ -260,7 +267,7 @@ function saveProduct(): void {
   const stock = parseInt((document.getElementById('form-stock') as HTMLInputElement).value);
   const cat = (document.getElementById('form-cat') as HTMLInputElement).value;
   const desc = (document.getElementById('form-desc') as HTMLInputElement).value.trim();
-  const result:Result = addProduct(nombre,precio,stock,cat,desc,editingId);
+  const result:Result = addProduct(nombre,precio,stock,cat,desc,editingId,products);
   if (!result.ok) {
   showToast(result.message);
 } else {
