@@ -336,7 +336,7 @@ document.getElementById('pedido-modal-overlay')!.addEventListener('click', funct
 
 renderCatalog(products);
 (window as any).showPage = showPage;
-(window as any).filterCat = filterCate;
+(window as any).filterCat = filterCat;
 (window as any).showDetail = showDetail;
 (window as any).openModal = openModal;
 (window as any).closeModal = closeModal;
