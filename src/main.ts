@@ -15,7 +15,6 @@ let pedidosList: ReturnType<typeof obtenerPedidos> extends Promise<infer T> ? T 
 let editingId: number | null = null
 let activePedidoId: string | null = null
 
-// ─── DATOS ───
 async function cargarProductos() {
   productos = await obtenerProductos()
 }
@@ -24,7 +23,6 @@ async function cargarPedidos() {
   pedidosList = await obtenerPedidos()
 }
 
-// ─── NAVEGACIÓN ───
 async function showPage(name: string) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
   document.querySelectorAll('nav ul li a').forEach(a => a.classList.remove('active'))

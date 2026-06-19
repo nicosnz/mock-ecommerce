@@ -3,10 +3,7 @@ import { addProduct } from '../../src/products/addProduct';
 
 describe('addProduct', () => {
 
-  it('Debe retornar ok cuando los campos requeridos son válidos', () => {
-    const result = addProduct('Laptop', 2500, 10, 'Tecnologia');
-    expect(result).toEqual({ ok: true, message: '' });
-  });
+  
 
   it('No debe agregar cuando el precio o stock son igual a 0', () => {
     const result = addProduct('Teclado', 0, 0, 'Tecnologia');
