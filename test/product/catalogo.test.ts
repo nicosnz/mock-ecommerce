@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { construirCatalogo } from '../../src/products/construirCatalogo'
+import { filtrarPorCategoria } from '../../src/products/filtrarPorCategoria'
 import type { Product } from '../../src/products/Product'
 
 const productosEjemplo: Product[] = [
