@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { construirCatalogo } from '../../src/products/construirCatalogo'
-import type { Product } from '../../src/products/Product'
 
 describe('Explorar Catalogo', () => {
 
