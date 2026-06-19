@@ -15,19 +15,15 @@ export async function actualizarEstadoPedido(
   return repositorioPedidos.actualizarEstado(id, estado)
 }
 
-export async function crearPedido(cart: Cart[]): Promise<Result> {
-  const pedidoId = await repositorioPedidos.insertar('Cliente Online')
-  if (!pedidoId) return { ok: false, message: 'Error al crear el pedido.' }
-
-  const items = cart.map(i => ({
-    nombre: i.producto.nombre,
-    precio: i.producto.precio,
-    qty: i.qty,
+function cartAItems(cart: Cart[]) {
+  return cart.map(item => ({
+    nombre: item.producto.nombre,
+    precio: item.producto.precio,
+    qty: item.qty,
   }))
+}
 
-  const resultItems = await repositorioPedidos.insertarItems(pedidoId, items)
-  if (!resultItems.ok) return resultItems
-
+async function descontarStock(cart: Cart[]): Promise<void> {
   const productosActuales = await repositorioProductos.obtenerTodos()
   for (const item of cart) {
     const prod = productosActuales.find(p => p.id === item.producto.id)
@@ -38,6 +34,15 @@ export async function crearPedido(cart: Cart[]): Promise<Result> {
       )
     }
   }
+}
 
+export async function crearPedido(cart: Cart[]): Promise<Result> {
+  const pedidoId = await repositorioPedidos.insertar('Cliente Online')
+  if (!pedidoId) return { ok: false, message: 'Error al crear el pedido.' }
+
+  const resultado = await repositorioPedidos.insertarItems(pedidoId, cartAItems(cart))
+  if (!resultado.ok) return resultado
+
+  await descontarStock(cart)
   return { ok: true, message: '¡Pedido confirmado con éxito! 🎉' }
 }
