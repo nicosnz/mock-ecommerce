@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { obtenerDetalle } from '../../src/products/obtenerDetalle'
 import type { Product } from '../../src/products/Product'
 
 const productos: Product[] = [
