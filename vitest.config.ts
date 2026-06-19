@@ -6,7 +6,8 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html'],
       exclude: [
-        'src/products/ProductsMock.ts'
+        'src/main.ts',
+        'supabase/**',
       ]
     }
   }

@@ -1,69 +1,55 @@
-import { addToCart} from './cart/AddtoCart';
-import type { Cart } from "./cart/Cart";
-import { updateCartCount } from './cart/updateCartCount';
-import type { EstadoPedido } from "./pedidos/Pedido";
-import { findPedido, pedidos } from "./pedidos/PedidosMock";
-import { addProduct } from './products/addProduct';
-import { filterCat } from './products/filterCategory';
-import type { Product } from "./products/Product";
-import { delProduct, products } from './products/ProductsMock';
-import type { Result } from './shared/Result';
-import { showToast } from "./shared/Toast";
+import { addToCart } from './cart/AddtoCart'
+import type { Cart } from './cart/Cart'
+import { updateCartCount } from './cart/updateCartCount'
+import type { EstadoPedido } from './pedidos/Pedido'
+import { actualizarEstadoPedido, crearPedido, obtenerPedidos } from './pedidos/pedidosService'
+import { addProduct } from './products/addProduct'
+import { filterCat } from './products/filterCategory'
+import type { Product } from './products/Product'
+import { eliminarProducto, guardarProducto, obtenerProductos } from './products/productosService'
+import { showToast } from './shared/Toast'
 
+let cart: Cart[] = []
+let productos: Product[] = []
+let pedidosList: ReturnType<typeof obtenerPedidos> extends Promise<infer T> ? T : never[] = []
+let editingId: number | null = null
+let activePedidoId: string | null = null
 
-
-let cart:Cart[] = [];
-let editingId:number | null = null;
-let activePedidoId:string | null = null;
-
-
-// ─── NAVIGATION ───
-function showPage(name:string) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('nav ul li a').forEach(a => a.classList.remove('active'));
-  document.getElementById('page-' + name)!.classList.add('active');
-  const navEl = document.getElementById('nav-' + name);
-  if (navEl) navEl.classList.add('active');
-  if (name === 'catalogo') renderCatalog(products);
-  if (name === 'gestion') renderTable();
-  if (name === 'pedidos-comerciante') renderPedidos();
-  if (name === 'pedido') renderCart();
+// ─── DATOS ───
+async function cargarProductos() {
+  productos = await obtenerProductos()
 }
 
-function addProductToCart(id: number) {
+async function cargarPedidos() {
+  pedidosList = await obtenerPedidos()
+}
 
-  const updatedCart = addToCart(
-    id,
-    products,
-    cart
-  );
+// ─── NAVEGACIÓN ───
+async function showPage(name: string) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('nav ul li a').forEach(a => a.classList.remove('active'))
+  document.getElementById('page-' + name)!.classList.add('active')
+  const navEl = document.getElementById('nav-' + name)
+  if (navEl) navEl.classList.add('active')
 
-  if (!updatedCart) {
-    showToast("No hay stock disponible");
-    return;
+  if (name === 'catalogo') {
+    await cargarProductos()
+    renderCatalog(productos)
   }
-
-  cart = updatedCart;
-
-  const product = products.find(p => p.id === id);
-
-  updateCartTotal(cart);
-
-  if (product) {
-    showToast(`"${product.nombre}" agregado al pedido ✓`);
+  if (name === 'gestion') {
+    await cargarProductos()
+    renderTable()
   }
-}
-export function updateCartTotal(cart:Cart[]) {
-  const total = updateCartCount(cart)
-  
-  const cart_count = document.getElementById('cart-count')
-  if(!cart_count) return;
-  cart_count.textContent = String(total);
+  if (name === 'pedidos-comerciante') {
+    await cargarPedidos()
+    renderPedidos()
+  }
+  if (name === 'pedido') renderCart()
 }
 
-// ─── CATALOG ───
-function renderCatalog(items:Product[]) {
-  const g = document.getElementById('catalog-grid')!;
+// ─── CATÁLOGO ───
+function renderCatalog(items: Product[]) {
+  const g = document.getElementById('catalog-grid')!
   g.innerHTML = items.map(p => `
     <div class="product-card" onclick="showDetail(${p.id})">
       <div class="product-img">${p.emoji}</div>
@@ -77,45 +63,46 @@ function renderCatalog(items:Product[]) {
         </div>
       </div>
     </div>
-  `).join('');
+  `).join('')
 }
 
-
-function filterCate(cat:string, btn:HTMLButtonElement) {
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const filtered = filterCat(cat,products)
-  renderCatalog(filtered);
+function filtrarCategoria(cat: string, btn: HTMLButtonElement) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  renderCatalog(filterCat(cat, productos))
 }
 
-// ─── DETAIL ───
-function showDetail(id:number) {
-  const p = products.find(x => x.id === id);
-  if (!p) return;
-  const detail_emoji = document.getElementById('detail-emoji');
-  const detail_cat = document.getElementById('detail-cat');
-  const detail_name = document.getElementById('detail-name');
-  const detail_price = document.getElementById('detail-price') ;
-  const detail_stock = document.getElementById('detail-stock') 
-  const detail_desc = document.getElementById('detail-desc') 
-  if(!detail_emoji || !detail_cat || !detail_name || !detail_price || !detail_stock || !detail_desc ) return;
-  detail_emoji.textContent =  p.emoji!;
-  detail_cat.textContent =p.cat;
-  detail_name.textContent = p.nombre
-  detail_price.textContent = `Bs. ${p.precio}`;
-  detail_stock.textContent = `📦 ${p.stock} en stock`;
-  detail_desc.textContent = p.desc;
+// ─── DETALLE ───
+function showDetail(id: number) {
+  const p = productos.find(x => x.id === id)
+  if (!p) return
+
+  const detail_emoji  = document.getElementById('detail-emoji')
+  const detail_cat    = document.getElementById('detail-cat')
+  const detail_name   = document.getElementById('detail-name')
+  const detail_price  = document.getElementById('detail-price')
+  const detail_stock  = document.getElementById('detail-stock')
+  const detail_desc   = document.getElementById('detail-desc')
+
+  if (!detail_emoji || !detail_cat || !detail_name || !detail_price || !detail_stock || !detail_desc) return
+
+  detail_emoji.textContent = p.emoji!
+  detail_cat.textContent   = p.cat
+  detail_name.textContent  = p.nombre
+  detail_price.textContent = `Bs. ${p.precio}`
+  detail_stock.textContent = `📦 ${p.stock} en stock`
+  detail_desc.textContent  = p.desc
+
   const detail_add_btn = document.getElementById('detail-add-btn')
-  if(!detail_add_btn) return
-  detail_add_btn.addEventListener("click", () => {
-    addToCart(id,products,cart);
-    showToast(`"${p.nombre}" agregado al pedido ✓`);
-  });
+  if (!detail_add_btn) return
+  detail_add_btn.onclick = () => {
+    addProductToCart(id)
+  }
 
-  const detail_opinions = document.getElementById('detail-opinions');
-  if(!detail_opinions) return;
-  if(!p.opinions) return;
-  detail_opinions.innerHTML = p.opinions.length
+  const detail_opinions = document.getElementById('detail-opinions')
+  if (!detail_opinions) return
+
+  detail_opinions.innerHTML = p.opinions?.length
     ? p.opinions.map(o => `
         <div class="opinion-card">
           <div class="opinion-header">
@@ -124,27 +111,47 @@ function showDetail(id:number) {
           </div>
           <div class="opinion-text">${o.texto}</div>
         </div>`).join('')
-    : '<p style="color:var(--muted);font-size:0.88rem">Aún no hay opiniones.</p>';
-  showPage('detalle');
+    : '<p style="color:var(--muted);font-size:0.88rem">Aún no hay opiniones.</p>'
+
+  showPage('detalle')
 }
 
+// ─── CARRITO ───
+function addProductToCart(id: number) {
+  const updatedCart = addToCart(id, productos, cart)
+  if (!updatedCart) {
+    showToast('No hay stock disponible')
+    return
+  }
+  cart = updatedCart
+  const producto = productos.find(p => p.id === id)
+  updateCartTotal(cart)
+  if (producto) showToast(`"${producto.nombre}" agregado al pedido ✓`)
+}
 
-
+export function updateCartTotal(cart: Cart[]) {
+  const total = updateCartCount(cart)
+  const cart_count = document.getElementById('cart-count')
+  if (!cart_count) return
+  cart_count.textContent = String(total)
+}
 
 export function renderCart() {
-  const container = document.getElementById('cart-items');
-  const summary = document.getElementById('cart-summary-block');
-  if(!container || !summary) return;
+  const container = document.getElementById('cart-items')
+  const summary   = document.getElementById('cart-summary-block')
+  if (!container || !summary) return
+
   if (!cart.length) {
     container.innerHTML = `
       <div class="empty-cart">
         <span class="big-emoji">🛒</span>
         <p>Tu pedido está vacío.</p>
         <p style="margin-top:0.5rem;font-size:0.85rem;color:var(--muted)">Explorá el catálogo y agregá productos.</p>
-      </div>`;
-    summary.innerHTML = '';
-    return;
+      </div>`
+    summary.innerHTML = ''
+    return
   }
+
   container.innerHTML = cart.map(i => `
     <div class="cart-item">
       <div class="cart-item-emoji">${i.producto.emoji}</div>
@@ -160,8 +167,9 @@ export function renderCart() {
       <div class="cart-item-total">Bs. ${i.producto.precio * i.qty}</div>
       <button class="remove-btn" onclick="removeFromCart(${i.producto.id})">✕</button>
     </div>
-  `).join('');
-  const total = cart.reduce((s, i) => s + i.producto.precio * i.qty, 0);
+  `).join('')
+
+  const total = cart.reduce((s, i) => s + i.producto.precio * i.qty, 0)
   summary.innerHTML = `
     <div class="cart-summary">
       <div>
@@ -169,20 +177,64 @@ export function renderCart() {
         <div class="cart-total-num">Bs. ${total}</div>
       </div>
       <button class="confirm-btn" onclick="confirmPedido()">Confirmar Pedido →</button>
-    </div>`;
+    </div>`
 }
 
+function changeQty(id: number, delta: number) {
+  const item = cart.find(i => i.producto.id === id)
+  if (!item) return
 
+  if (delta > 0) {
+    const producto = productos.find(p => p.id === id)
+    if (!producto || producto.stock <= 0) {
+      showToast('No hay más stock disponible')
+      return
+    }
+    producto.stock--
+  } else {
+    const producto = productos.find(p => p.id === id)
+    if (producto) producto.stock++
+  }
 
+  const newQty = item.qty + delta
+  cart = newQty <= 0
+    ? cart.filter(i => i.producto.id !== id)
+    : cart.map(i => i.producto.id === id ? { ...i, qty: newQty } : i)
 
+  updateCartTotal(cart)
+  renderCart()
+}
 
+function removeFromCart(id: number) {
+  const item = cart.find(i => i.producto.id === id)
+  if (item) {
+    const producto = productos.find(p => p.id === id)
+    if (producto) producto.stock += item.qty
+  }
+  cart = cart.filter(i => i.producto.id !== id)
+  updateCartTotal(cart)
+  renderCart()
+}
 
-// ─── PRODUCT TABLE ───
+async function confirmPedido() {
+  if (!cart.length) return
+  const result = await crearPedido(cart)
+  if (!result.ok) {
+    showToast(result.message)
+    return
+  }
+  cart = []
+  updateCartTotal(cart)
+  renderCart()
+  showToast(result.message)
+}
+
+// ─── TABLA DE GESTIÓN ───
 export function renderTable() {
-  const products_tbody = document.getElementById('products-tbody');
-  if(!products_tbody) return;
+  const products_tbody = document.getElementById('products-tbody')
+  if (!products_tbody) return
 
-  products_tbody.innerHTML = products.map(p => `
+  products_tbody.innerHTML = productos.map(p => `
     <tr>
       <td><span class="table-emoji">${p.emoji}</span></td>
       <td><strong>${p.nombre}</strong></td>
@@ -194,163 +246,172 @@ export function renderTable() {
         <button class="del-btn" onclick="deleteProduct(${p.id})">Eliminar</button>
       </td>
     </tr>
-  `).join('');
+  `).join('')
 }
 
+function editProduct(id: number) {
+  const p = productos.find(x => x.id === id)
+  if (!p) return
+  editingId = id
 
-function editProduct(id:number) {
-  const p = products.find(x => x.id === id);
-  if(!p) return;
-  editingId = id;
-  const nombre = document.getElementById('form-nombre') as HTMLInputElement;
-  const desc = document.getElementById('form-desc') as HTMLInputElement;
-  const precio = document.getElementById('form-precio') as HTMLInputElement;
-  const stock = document.getElementById('form-stock') as HTMLInputElement;
-  const cat = document.getElementById('form-cat') as HTMLInputElement;
-  const emoji = document.getElementById('form-emoji') as HTMLInputElement;
+  ;(document.getElementById('form-nombre') as HTMLInputElement).value  = p.nombre
+  ;(document.getElementById('form-desc')   as HTMLInputElement).value  = p.desc
+  ;(document.getElementById('form-precio') as HTMLInputElement).value  = String(p.precio)
+  ;(document.getElementById('form-stock')  as HTMLInputElement).value  = String(p.stock)
+  ;(document.getElementById('form-cat')    as HTMLInputElement).value  = p.cat
+  ;(document.getElementById('form-emoji')  as HTMLInputElement).value  = p.emoji!
 
-  const modalTitle = document.getElementById('modal-title') as HTMLElement;
-  const modalOverlay = document.getElementById('modal-overlay') as HTMLElement;
-  nombre.value = p.nombre;
-  desc.value = p.desc;
-  precio.value = String(p.precio);
-  stock.value = String(p.stock);
-  cat.value = p.cat;
-  emoji.value = p.emoji!;
-
-  modalTitle.textContent = 'Editar Producto';
-  modalOverlay.classList.add('open');
+  ;(document.getElementById('modal-title')   as HTMLElement).textContent = 'Editar Producto'
+  ;(document.getElementById('modal-overlay') as HTMLElement).classList.add('open')
 }
 
 // ─── MODAL ───
 function openModal() {
-  editingId = null;
+  editingId = null
 
-  const nombre = document.getElementById('form-nombre') as HTMLInputElement;
-  const desc = document.getElementById('form-desc') as HTMLInputElement;
-  const precio = document.getElementById('form-precio') as HTMLInputElement;
-  const stock = document.getElementById('form-stock') as HTMLInputElement;
-  const cat = document.getElementById('form-cat') as HTMLInputElement;
-  const emoji = document.getElementById('form-emoji') as HTMLInputElement;
+  ;(document.getElementById('form-nombre') as HTMLInputElement).value = ''
+  ;(document.getElementById('form-desc')   as HTMLInputElement).value = ''
+  ;(document.getElementById('form-precio') as HTMLInputElement).value = ''
+  ;(document.getElementById('form-stock')  as HTMLInputElement).value = ''
+  ;(document.getElementById('form-cat')    as HTMLInputElement).value = ''
+  ;(document.getElementById('form-emoji')  as HTMLInputElement).value = ''
 
-  const modalTitle = document.getElementById('modal-title') as HTMLElement;
-  const modalOverlay = document.getElementById('modal-overlay') as HTMLElement;
-
-  nombre.value = '';
-  desc.value = '';
-  precio.value = '';
-  stock.value = '';
-  cat.value = '';
-  emoji.value = '';
-
-  modalTitle.textContent = 'Agregar Producto';
-  modalOverlay.classList.add('open');
+  ;(document.getElementById('modal-title')   as HTMLElement).textContent = 'Agregar Producto'
+  ;(document.getElementById('modal-overlay') as HTMLElement).classList.add('open')
 }
+
 function closeModal() {
-  const modal_overlay = document.getElementById('modal-overlay');
-  if(!modal_overlay) return;
-  modal_overlay.classList.remove('open');
+  document.getElementById('modal-overlay')?.classList.remove('open')
 }
 
-export function deleteProduct(id:number) {
-  console.log(products);
-  
-  delProduct(id);
-  
-  renderTable();
-  showToast('Producto eliminado.');
-}
-
-function saveProduct(): void {
-  const nombre = (document.getElementById('form-nombre') as HTMLInputElement).value.trim();
-  const precio = parseFloat((document.getElementById('form-precio') as HTMLInputElement).value);
-  const stock = parseInt((document.getElementById('form-stock') as HTMLInputElement).value);
-  const cat = (document.getElementById('form-cat') as HTMLInputElement).value;
-  const desc = (document.getElementById('form-desc') as HTMLInputElement).value.trim();
-  const result:Result = addProduct(nombre,precio,stock,cat,desc,editingId,products);
+export async function deleteProduct(id: number) {
+  const result = await eliminarProducto(id)
   if (!result.ok) {
-  showToast(result.message);
-} else {
-  showToast(result.message);
+    showToast(result.message)
+    return
+  }
+  productos = productos.filter(p => p.id !== id)
+  renderTable()
+  showToast(result.message)
 }
-  closeModal();
-  renderTable();
+
+async function saveProduct() {
+  const nombre = (document.getElementById('form-nombre') as HTMLInputElement).value.trim()
+  const precio = parseFloat((document.getElementById('form-precio') as HTMLInputElement).value)
+  const stock  = parseInt((document.getElementById('form-stock')   as HTMLInputElement).value)
+  const cat    = (document.getElementById('form-cat')    as HTMLInputElement).value
+  const desc   = (document.getElementById('form-desc')   as HTMLInputElement).value.trim()
+  const emoji  = (document.getElementById('form-emoji')  as HTMLInputElement).value.trim()
+
+  const validacion = addProduct(nombre, precio, stock, cat)
+  if (!validacion.ok) {
+    showToast(validacion.message)
+    return
+  }
+
+  const result = await guardarProducto({ nombre, desc, precio, stock, cat, emoji: emoji || '📦' }, editingId)
+  showToast(result.message)
+
+  if (result.ok) {
+    closeModal()
+    await cargarProductos()
+    renderTable()
+  }
 }
 
 // ─── PEDIDOS COMERCIANTE ───
 function renderPedidos() {
-  const estadoClass = {
-    'Pendiente': 'estado-pendiente',
-    'En proceso': 'estado-en-proceso',
-    'Entregado': 'estado-entregado'
-  };
-  document.getElementById('pedidos-list')!.innerHTML = pedidos.map(p => {
-    const total = p.items.reduce((s, i) => s + i.precio * i.qty, 0);
+  const estadoClass: Record<string, string> = {
+    'Pendiente':   'estado-pendiente',
+    'En proceso':  'estado-en-proceso',
+    'Entregado':   'estado-entregado',
+  }
+
+  document.getElementById('pedidos-list')!.innerHTML = pedidosList.map(p => {
+    const total = p.items.reduce((s, i) => s + i.precio * i.qty, 0)
     return `
       <div class="pedido-card" onclick="openPedidoModal('${p.id}')">
         <div class="pedido-card-header">
-          <span class="pedido-id">Pedido ${p.id}</span>
-          <span class="estado-badge ${estadoClass[p.estado] || 'estado-pendiente'}">${p.estado}</span>
+          <span class="pedido-id">Pedido #${p.id}</span>
+          <span class="estado-badge ${estadoClass[p.estado] ?? 'estado-pendiente'}">${p.estado}</span>
         </div>
         <div class="pedido-items">${p.items.map(i => `${i.nombre} x${i.qty}`).join(' · ')}</div>
         <div class="pedido-total">Total: Bs. ${total}</div>
-      </div>`;
-  }).join('');
+      </div>`
+  }).join('')
 }
 
-function openPedidoModal(id:string) {
-  const p = findPedido(id,pedidos);
-  activePedidoId = id;
-  if(!p) return;
-  const total = p.items.reduce((s, i) => s + i.precio * i.qty, 0);
-  document.getElementById('pm-id')!.textContent = `Pedido ${p.id}`;
-  document.getElementById('pm-cliente')!.textContent = p.cliente;
-  document.getElementById('pm-items')!.innerHTML = p.items.map(i => `
+function openPedidoModal(id: string) {
+  const p = pedidosList.find(x => x.id === id)
+  if (!p) return
+  activePedidoId = id
+
+  const total = p.items.reduce((s, i) => s + i.precio * i.qty, 0)
+  document.getElementById('pm-id')!.textContent      = `Pedido #${p.id}`
+  document.getElementById('pm-cliente')!.textContent = p.cliente
+  document.getElementById('pm-items')!.innerHTML     = p.items.map(i => `
     <div class="pedido-detail-item">
       <span>${i.nombre} <span style="color:var(--muted)">x${i.qty}</span></span>
       <span style="font-weight:600">Bs. ${i.precio * i.qty}</span>
-    </div>`).join('');
-  document.getElementById('pm-total')!.textContent = `Bs. ${total}`;
-  const sel = document.getElementById('pm-status');
-  if(!sel) return;
+    </div>`).join('')
+  document.getElementById('pm-total')!.textContent = `Bs. ${total}`
+
+  const sel = document.getElementById('pm-status')
+  if (!sel) return
   sel.innerHTML = ['Pendiente', 'En proceso', 'Entregado']
-    .map(e => `<option ${e === p.estado ? 'selected' : ''}>${e}</option>`).join('');
-  document.getElementById('pedido-modal-overlay')!.classList.add('open');
+    .map(e => `<option ${e === p.estado ? 'selected' : ''}>${e}</option>`).join('')
+
+  document.getElementById('pedido-modal-overlay')!.classList.add('open')
 }
 
 function closePedidoModal() {
-  document.getElementById('pedido-modal-overlay')!.classList.remove('open');
+  document.getElementById('pedido-modal-overlay')!.classList.remove('open')
 }
 
-function updatePedidoStatus() {
-  const p = pedidos.find(x => x.id === activePedidoId);
-  const pm_status = document.getElementById('pm-status') as HTMLInputElement;
-  if(!pm_status) return;
-  if (p) {
-    p.estado = pm_status.value as EstadoPedido;
-    renderPedidos();
+async function updatePedidoStatus() {
+  if (!activePedidoId) return
+  const pm_status = document.getElementById('pm-status') as HTMLSelectElement
+  if (!pm_status) return
+
+  const result = await actualizarEstadoPedido(activePedidoId, pm_status.value as EstadoPedido)
+  if (!result.ok) {
+    showToast(result.message)
+    return
   }
-}
 
+  await cargarPedidos()
+  renderPedidos()
+  closePedidoModal()
+  showToast('Estado actualizado ✓')
+}
 
 // ─── INIT ───
-document.getElementById('modal-overlay')!.addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
-document.getElementById('pedido-modal-overlay')!.addEventListener('click', function(e) {
-  if (e.target === this) closePedidoModal();
-});
+async function init() {
+  document.getElementById('modal-overlay')!.addEventListener('click', function (e) {
+    if (e.target === this) closeModal()
+  })
+  document.getElementById('pedido-modal-overlay')!.addEventListener('click', function (e) {
+    if (e.target === this) closePedidoModal()
+  })
 
-renderCatalog(products);
-(window as any).showPage = showPage;
-(window as any).filterCat = filterCate;
-(window as any).showDetail = showDetail;
-(window as any).openModal = openModal;
-(window as any).closeModal = closeModal;
-(window as any).saveProduct = saveProduct;
-(window as any).editProduct = editProduct;
-(window as any).deleteProduct = deleteProduct;
-(window as any).addProductToCart = addProductToCart;
-(window as any).openPedidoModal = openPedidoModal;
-(window as any).updatePedidoStatus = updatePedidoStatus;
-(window as any).closePedidoModal = closePedidoModal;
+  await cargarProductos()
+  renderCatalog(productos)
+}
+
+init()
+
+;(window as any).showPage           = showPage
+;(window as any).filterCat          = filtrarCategoria
+;(window as any).showDetail         = showDetail
+;(window as any).openModal          = openModal
+;(window as any).closeModal         = closeModal
+;(window as any).saveProduct        = saveProduct
+;(window as any).editProduct        = editProduct
+;(window as any).deleteProduct      = deleteProduct
+;(window as any).addProductToCart   = addProductToCart
+;(window as any).changeQty          = changeQty
+;(window as any).removeFromCart     = removeFromCart
+;(window as any).confirmPedido      = confirmPedido
+;(window as any).openPedidoModal    = openPedidoModal
+;(window as any).updatePedidoStatus = updatePedidoStatus
+;(window as any).closePedidoModal   = closePedidoModal
