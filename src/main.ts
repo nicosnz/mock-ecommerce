@@ -6,6 +6,7 @@ import { actualizarEstadoPedido, crearPedido, obtenerPedidos } from './pedidos/p
 import { addProduct } from './products/addProduct'
 import { filterCat } from './products/filterCategory'
 import type { Product } from './products/Product'
+import { construirCatalogo } from './products/construirCatalogo'
 import { eliminarProducto, guardarProducto, obtenerProductos } from './products/productosService'
 import { showToast } from './shared/Toast'
 
@@ -45,23 +46,9 @@ async function showPage(name: string) {
   if (name === 'pedido') renderCart()
 }
 
-// ─── CATÁLOGO ───
 function renderCatalog(items: Product[]) {
   const g = document.getElementById('catalog-grid')!
-  g.innerHTML = items.map(p => `
-    <div class="product-card" onclick="showDetail(${p.id})">
-      <div class="product-img">${p.emoji}</div>
-      <div class="product-info">
-        <div class="product-cat">${p.cat}</div>
-        <div class="product-name">${p.nombre}</div>
-        <div class="product-desc">${p.desc.slice(0, 70)}...</div>
-        <div class="product-footer">
-          <div class="product-price">Bs. ${p.precio}</div>
-          <button class="add-btn" onclick="event.stopPropagation(); addProductToCart(${p.id})">+ Agregar</button>
-        </div>
-      </div>
-    </div>
-  `).join('')
+  g.innerHTML = construirCatalogo(items)
 }
 
 function filtrarCategoria(cat: string, btn: HTMLButtonElement) {
