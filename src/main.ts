@@ -7,6 +7,7 @@ import { addProduct } from './products/addProduct'
 import { filterCat } from './products/filterCategory'
 import type { Product } from './products/Product'
 import { construirCatalogo } from './products/construirCatalogo'
+import { obtenerDetalle } from './products/obtenerDetalle'
 import { eliminarProducto, guardarProducto, obtenerProductos } from './products/productosService'
 import { showToast } from './shared/Toast'
 
@@ -59,7 +60,7 @@ function filtrarCategoria(cat: string, btn: HTMLButtonElement) {
 
 // ─── DETALLE ───
 function showDetail(id: number) {
-  const p = productos.find(x => x.id === id)
+  const p = obtenerDetalle(id, productos)
   if (!p) return
 
   const detail_emoji  = document.getElementById('detail-emoji')
